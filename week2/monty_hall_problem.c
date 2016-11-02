@@ -1,4 +1,4 @@
-// Write a progam that runs 'n' simulations of the Monty Hall
+// Write a progam that runs 'n' simulations of the Monty Hall problem
 // and aggregates wheter it is better to switch doors or not.
 // Check wiki for more info on the Monty Hall problem.
 
@@ -6,29 +6,66 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main()
+
+int single_game(char door, char choosen, char keep)
 {
-    int sum0 = 0;
-    int sum1 = 0;
-    int sum2 = 0;
-    /* int sum3 = 0; */
-    int ran = 0;
+    if (keep)
+    {
+        if (choosen == door) {return 1;}
+        else {return 0;}
+    }
+    else
+    {
+        if (choosen == door) {return 0;}
+        else {return 1;}
+    }
+}
+
+
+void iters_of_monty(int n_sims)
+{
+    float win, lose;
     int i;
+    int k_succ = 0;
+    int nok_succ = 0;
+    int n_keep = 0;
+    char door = 0;
+    char choosen = 0;
+    char keep = 0;
 
     srand(time(NULL));
-    for (i=0; i<1e2; i++)
+
+    for (i=0; i<n_sims; i++)
     {
-        ran = rand() % 3;
-        if (ran == 0) {sum0++;}
-        else if (ran == 1) {sum1++;}
-        else if (ran == 2) {sum2++;}
-        /* else if (ran == 3) {sum3++;} */
+        door = rand() % 3;
+        choosen = rand() % 3;
+        keep = rand() % 2;
+
+        if (keep)
+        {
+            k_succ += single_game(door, choosen, keep);
+            n_keep++;
+        }
+        else
+        {
+            nok_succ += single_game(door, choosen, keep);
+        }
     }
 
-    /* printf("0: %d, 1: %d, 2: %d, 3: %d\n", sum0, sum1, sum2, sum3); */
-    printf("0: %d, 1: %d, 2: %d\n", sum0, sum1, sum2);
+    win = (k_succ * 100.) / n_keep;
+    lose = (n_keep - k_succ * 100.) / n_keep;
+    printf("when keeping the door - win: %3.3f%c, lose: %3.3f%c\n", win, 37, lose, 37);
+    win = (nok_succ * 100.) / (n_sims - n_keep);
+    lose = ((n_sims - n_keep - nok_succ) * 100.) / (n_sims - n_keep);
+    printf("when switching the door - win: %3.3f%c, lose: %3.3f%c\n", win, 37, lose, 37);
+}
 
-    /* printf("%d\n", RAND_MAX); */
-    /* printf("%d\n", rand()); */
+
+int main()
+{
+    int sims = 1e5;
+
+    iters_of_monty(sims);
+
     return 0;
 }

@@ -5,6 +5,8 @@
 #include <stdint.h>
 
 
+// Function taken from stackoverflow and used for
+// representational/debugging purposes.
 void printBits(size_t const size, void const * const ptr)
 {
     unsigned char *b = (unsigned char*) ptr;

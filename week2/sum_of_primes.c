@@ -11,7 +11,7 @@ int check_sum(int a, int b, int sum)
     {
         printf("%d + %d != %d\n", a, b, sum);
     }
-    else 
+    else
     {
         printf("%d + %d == %d\n", a, b, sum);
     }
@@ -22,7 +22,10 @@ int check_sum(int a, int b, int sum)
 int isprime(int a)
 {
     if (a == 1) {return 1;}
+    else if (a == 0) {return 0;}
+
     int i;
+
     for(i=2; i<a; i++)
     {
         if ((a % i) == 0) {return 0;}
@@ -37,7 +40,7 @@ void sum_of_primes(int sum)
     k = 0;
     int median, rem;
 
-    median = (sum / 2) + 1;
+    median = (sum / 2);
 
     for(i=1; i<=median; i=2*k+1)
     {
@@ -46,7 +49,17 @@ void sum_of_primes(int sum)
         {
             check_sum(rem, sum-rem, sum);
         }
+
         k++;
+
+        if (i == 1)
+        {
+            rem = sum - 2;
+            if (isprime(rem) && isprime(sum - rem))
+            {
+                check_sum(rem, sum-rem, sum);
+            }
+        }
     }
 }
 
@@ -54,9 +67,9 @@ void sum_of_primes(int sum)
 int main()
 {
 
-    int sum = 41;
+    int sum = 11;
 
     sum_of_primes(sum);
-    
+
     return 0;
 }
