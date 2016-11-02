@@ -1,5 +1,6 @@
 // Write a progam that runs 'n' simulations of the Monty Hall problem
 // and aggregates wheter it is better to switch doors or not.
+// Works in the case of N doors with N-2 being 'opened' by the host.
 // Check wiki for more info on the Monty Hall problem.
 
 
@@ -22,7 +23,9 @@ int single_game(char door, char choosen, char keep)
 }
 
 
-void iters_of_monty(int n_sims)
+// Generalized function for the case of N doors, and the host opening
+// all but 1 (except the players own ofcourse).
+void iters_of_monty(int n_sims, int n_doors)
 {
     float win, lose;
     int i;
@@ -37,8 +40,8 @@ void iters_of_monty(int n_sims)
 
     for (i=0; i<n_sims; i++)
     {
-        door = rand() % 3;
-        choosen = rand() % 3;
+        door = rand() % n_doors;
+        choosen = rand() % n_doors;
         keep = rand() % 2;
 
         if (keep)
@@ -53,7 +56,7 @@ void iters_of_monty(int n_sims)
     }
 
     win = (k_succ * 100.) / n_keep;
-    lose = (n_keep - k_succ * 100.) / n_keep;
+    lose = ((n_keep - k_succ) * 100.) / n_keep;
     printf("when keeping the door - win: %3.3f%c, lose: %3.3f%c\n", win, 37, lose, 37);
     win = (nok_succ * 100.) / (n_sims - n_keep);
     lose = ((n_sims - n_keep - nok_succ) * 100.) / (n_sims - n_keep);
@@ -64,8 +67,9 @@ void iters_of_monty(int n_sims)
 int main()
 {
     int sims = 1e5;
+    int doors = 100;
 
-    iters_of_monty(sims);
+    iters_of_monty(sims, doors);
 
     return 0;
 }
