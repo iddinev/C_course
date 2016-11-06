@@ -1,7 +1,9 @@
-// Find out what the hell you should do in this assignment!
+// Encode an 8 bit int in a unpacked binary-coded decimal format.
+// Wiki has more info on BCD's. Basically encode each int digit
+// to a separate byte: BCD(72) == 0x72 == 114.
 
 
-#define BYTLE_LEN 8
+#define BYTE_LEN 8
 
 #include <stdio.h>
 #include <stdint.h>
@@ -26,29 +28,44 @@ void printBits(size_t const size, void const * const ptr)
     puts("");
 }
 
-void printBCD(uint8_t *num)
+int BCD(uint8_t num)
 {
+    uint32_t BCDencoded = 0;
+    uint32_t nibble_mask = 0x01;
+    uint8_t bit;
+    char digit;
+    char i = 0;
+
+    while (num)
+    {
+        digit = num % 10;
+
+        while (digit)
+        {
+            bit = digit % 2;
+            if (bit) {BCDencoded |= nibble_mask;}
+            nibble_mask <<= 1;
+            digit /= 2;
+        }
+
+        i++;
+        nibble_mask = 0x01;
+        nibble_mask <<= 4 * i;
+        num /= 10;
+    }
+
+    return BCDencoded;
 }
 
 int main()
 {
-    uint8_t num = 0x72;
-    uint8_t  tmp_num = num;
-    uint32_t BCD;
-    uint8_t mask = 0x01;
-    char i = 0;
-    /* char rem_bits = sizeof(num) * BYTLE_LEN; */
+    uint8_t num = 73;
+    uint32_t BCDencoded;
 
-    /* printf("%d\n", num); */
-    do
-    {
-        tmp_num = num % 10;
-        printf("%d\n", num);
-        num = num / 10;
-        /* printf("%d\n", tmp_num); */
-    } while (num / 10 != 0);
-
-    /* printf("%d\n", 11 % 10); */
+    BCDencoded = BCD(num);
+    printf("input int: %d, BCD as hex: 0x%x, BCD as decimal: %d\n", num, BCDencoded, BCDencoded);
+    printf("BCD as binary:\n");
+    printBits(sizeof(BCDencoded), &BCDencoded);
 
     return 0;
 }

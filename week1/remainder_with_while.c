@@ -1,4 +1,8 @@
+// Compute the remainder from dividing 2 ints using while loops.
+
+
 #include <stdio.h>
+
 
 void main()
 {

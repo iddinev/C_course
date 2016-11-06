@@ -1,4 +1,8 @@
+// Print all the numbers up to 30, that are not divisible by 3 and 5.
+
+
 #include <stdio.h>
+
 
 void main()
 {

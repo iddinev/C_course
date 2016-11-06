@@ -1,4 +1,8 @@
+// Compute pi using Leibnitz's sum with 6 decimals of accuracy.
+
+
 #include <stdio.h>
+
 
 int main()
 {
