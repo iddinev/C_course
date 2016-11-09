@@ -27,6 +27,8 @@ int main()
     fp(1);
     (*fp)(2);
 
+    free(fp);
+
     return 0;
 }
 
