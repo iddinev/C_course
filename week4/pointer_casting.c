@@ -21,5 +21,9 @@ int main()
     printf("char pointer casting %d\n", *((int*)cp+4));
     printf("float pointer casting %d\n",*((int*)fp+4));
 
+    free(vp);
+    free(cp);
+    free(fp);
+
     return 0;
 }
