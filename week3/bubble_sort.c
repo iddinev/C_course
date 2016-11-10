@@ -25,6 +25,7 @@ void bubble_sort_ints(int *a, int len)
     }
 }
 
+
 void printArray(int *array, int len)
 {
     int i;
@@ -39,6 +40,7 @@ void printArray(int *array, int len)
     printf("}\n");
 }
 
+
 int main()
 {
     int array[] = {6, 2, 1, 10, 7, 5};
@@ -52,4 +54,3 @@ int main()
 
     return 0;
 }
-
