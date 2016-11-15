@@ -71,9 +71,8 @@ void transpose2d(int ***in_array, int in_rows, int in_columns)
         }
     }
 
+    free2d((void**)*in_array, in_rows);
     *in_array = array;
-    /* in_array = &array; */
-    /* free2d((void**)*in_array, in_rows); */
 
 }
 
@@ -102,6 +101,7 @@ int main()
 
     transpose2d((int***)&array2, rows, cols);
 
+    printf("-------\n");
     printArray(array2, cols, rows);
 
     free2d((void**)array2, rows);
