@@ -9,7 +9,13 @@
 char *quote_words(char *string, int len, char *delim)
 {
     int n_words = 0;
-    char *tmp = (char*)malloc(len * sizeof(char));
+    // Always beware when copying strings - strlen() DOES NOT COUNT THE
+    // TERMINATING NULL BYTE, BUT strcpy() COPIES IT: so when doing
+    // strcpy(dest,src) dest must be atleast strlen(src)+1 long!
+    // Otherwise you get a buffer overflow - the function docs say it's
+    // unpredictable what might happen in such a case.
+    char *tmp = (char*)malloc(len * sizeof(char)+1);
+    // ^ This is the case at hand.
     char *quoted_string, *tmp_start = tmp;
 
     strcpy(tmp, string);
