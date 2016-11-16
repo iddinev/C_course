@@ -8,19 +8,20 @@
 #include <stdlib.h>
 
 
-typedef struct
+struct node
 {
     int node_val;
-    void *next_node;
-}   node;
+    struct node *next_node;
+};
 
-void printNode(node *node_ptr)
+
+void printNode(struct node *node_ptr)
 {
     printf("node[%d] ", node_ptr->node_val);
 }
 
 
-void readNode(node *node_ptr)
+void readNode(struct node *node_ptr)
 {
     printf("new node value: ");
     scanf("%d", &node_ptr->node_val);
@@ -29,36 +30,39 @@ void readNode(node *node_ptr)
 
 int main()
 {
-    node root_node, head_node;
-    node *work_node;
+    struct node *root_node, *head_node, *work_node;
     int cont = 1;
 
-    /* work_node = &root_node; */
+    root_node = (struct node*)malloc(sizeof(struct node));
     head_node = root_node;
+
+    root_node->next_node = NULL;
+    printf("Initialize the root node\n");
+    readNode(root_node);
 
     // Construct list.
     while (cont)
     {
-        work_node = (node*)malloc(sizeof(node));
+        work_node = (struct node*)malloc(sizeof(struct node));
         readNode(work_node);
-        head_node.next_node = (void*)work_node;
-        head_node = *work_node;
-        head_node.next_node = NULL;
-        printNode((node*)&head_node);
-        printf("\n");
+        head_node->next_node = (struct node*)work_node;
+        head_node = work_node;
+        head_node->next_node = NULL;
         printf("Continue ? [0=no] ");
         scanf("%d", &cont);
     }
 
     // Print list forwards (and free memory in the procces).
-    while (head_node.next_node)
+    head_node = root_node;
+    while (head_node)
     {
         printf("-> ");
-        printNode((node*)&head_node);
+        printNode((struct node*)head_node);
+        free(head_node);
+        head_node = head_node->next_node;
+    }
 
-
-
-
+    printf("\n");
 
     return 0;
 }
