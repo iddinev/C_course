@@ -1,4 +1,4 @@
-// Write a program that implements a singly linked list.
+// Write a program that implements a singly linked list. 
 // Create a couple of nodes in a loop, then for verification
 // go over them backwards and print their values - use a simple
 // struct to implement the list.
