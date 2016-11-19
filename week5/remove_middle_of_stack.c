@@ -17,6 +17,7 @@ int main()
     constructStack((struct list_node**)&stack);
     tmp_node = stack;
 
+    printf("Original stack:\n");
     printStack((struct list_node*)stack);
 
     while (stack)
@@ -25,18 +26,24 @@ int main()
         stack = stack->next_node;
     }
 
+    if (stack_depth = 1)
+    {
+        printf("Stack has depth of 1 - cannot remove middle.\n");
+        return 0;
+    }
+
     stack = tmp_node;
-    for (int i=0; i<stack_depth/2 - 2; i++)
+    for (int i=0; i<stack_depth/2 - 1; i++)
     {
         stack = stack->next_node;
     }
 
-    middle_node = stack->;
-    stack = middle_node->next_node;
+    middle_node = stack->next_node;
+    stack->next_node = middle_node->next_node;
     free(middle_node);
     stack = tmp_node;
 
-    /* printf("Stack depth is %d\n", stack_depth); */
+    printf("Original stack with middle element removed:\n");
     printStack((struct list_node*)stack);
     freeStack((struct list_node**)&stack);
 
