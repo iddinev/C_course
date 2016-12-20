@@ -2,69 +2,115 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NAME_SIZE 11
+
+#define NAME_SIZE 61
+#define NUMBER_SIZE 11
+
+
+// Data is stored in a binary format.
+const char *PhoneBook = "./PhoneBook.dat";
+const char *tmp_PhoneBook = "./.tmp_PhoneBook.dat";
+
+
+// Constant field lengths will make searcing quicker.
+struct PhoneEntry
+{
+    char fullName[NAME_SIZE];
+    char PhoneNumber[NUMBER_SIZE];
+};
+
+
+void printEntry(struct PhoneEntry *Entry)
+{
+    printf("Full name: %s\n", Entry->fullName);
+    printf("Phone number: %s\n", Entry->PhoneNumber);
+}
+
 
 void sanitizeString(char **input_str)
-/* char sanitizeString(char *input_str) */
 {
-    /* printf("%d\n", input_str); */
-    /* printf("%d\n", *input_str); */
-    static char work_str[NAME_SIZE];
-    /* static char work_str[NAME_SIZE]; */
+    char *work_str = malloc(NAME_SIZE * sizeof(char));
     char *tmp;
     char delim[] = " \n";
     int len;
 
-    /* strcpy(work_str, input_str); */
+    tmp = *input_str;
 
-    printf("BBBB, %s\n", *input_str);
     while ((*input_str = strtok(*input_str, delim)) != NULL)
-    /* while ((input_str = strtok(input_str, delim)) != NULL) */
     {
-        printf("AAAA\n");
         strcat(work_str, *input_str);
+        strcat(work_str, " ");
         *input_str = NULL;
-        /* strcat(work_str, input_str); */
-        /* input_str = NULL; */
     }
 
     len = strlen(work_str);
-    if (!strcmp(&work_str[len], " ")) {work_str[len] = '\0';}
+    if (!strcmp(&work_str[len-1], " ")) {work_str[len-1] = '\0';}
 
     *input_str = work_str;
-    /* return work_str; */
+
+    free(tmp);
 }
 
-int main()
+
+void addEntry()
 {
-    char str[NAME_SIZE];
-    int ptr[2];
-    ptr[0] = 5;
-    int *pt = (int *)malloc(2*sizeof(int));
-    pt[0] = 6;
-    char c = 'c';
-    /* ptr = &c; */
-    int str_size = NAME_SIZE;
+    FILE *filep;
+    char *str = malloc(NAME_SIZE * sizeof(char));
+    struct PhoneEntry NewEntry;
 
-    printf("Give a string\n");
-    fgets(str, str_size, stdin);
-    printf("Input string is\n\"%s\"", str);
-    /* printf("%d\n", ptr); */
-    /* printf("%d\n", &ptr); */
-    /* printf("%d\n", *ptr); */
-    printf("%d\n", pt);
-    printf("%d\n", &pt);
-    printf("%d\n", *pt);
-    printf("%d\n", &pt[0]);
-    /* printf("%d\n", &ptr[0]); */
-    /* printf("%d\n", &ptr[1]); */
-    /* printf("%d\n", &str); */
-    /* printf("%d\n", str); */
-    /* printf("AAAA, %s\n", *ptr ); */
-    /* printf("Input string is\n%s", str); */
+    printf("Enter full name:\n");
+    fgets(str, NAME_SIZE, stdin);
     sanitizeString((char **)&str);
-    /* str = sanitizeString(str); */
-    printf("Sanitized string is\n\"%s\"", str);
+    strcpy(NewEntry.fullName, str);
 
-    return 0;
+    printf("Enter phone number:\n");
+    scanf("%s", NewEntry.PhoneNumber);
+
+    filep = fopen(PhoneBook, "a");
+
+    fwrite(&NewEntry, sizeof(struct PhoneEntry), 1, filep);
+
+    fclose(filep);
+
+    free(str);
+}
+
+
+// Space is cheap so we're going to use a tmp file for swapping.
+void searchORdelete(char deleteEntry)
+{
+    struct PhoneEntry SearchEntry, InputEntry;
+    char *str = malloc(NAME_SIZE * sizeof(char));
+    FILE *tmp_filep, *filep;
+
+    printf("Enter full name:\n");
+    fgets(str, NAME_SIZE, stdin);
+    sanitizeString((char **)&str);
+    strcpy(SearchEntry.fullName, str);
+
+    filep = fopen(PhoneBook, "r");
+
+    if (deleteEntry) {tmp_filep = fopen(tmp_PhoneBook, "w");}
+
+    while(fread(&InputEntry, sizeof(struct PhoneEntry), 1, filep))
+    {
+        if (!strcmp(SearchEntry.fullName, InputEntry.fullName))
+        {
+            if (deleteEntry)
+            {
+                fwrite(&InputEntry, sizeof(struct PhoneEntry), 1, tmp_filep);
+            }
+            printEntry((struct PhoneEntry*)&InputEntry);
+        }
+    }
+
+    if (deleteEntry)
+    {
+        fclose(tmp_filep);
+        rename(tmp_PhoneBook, PhoneBook);
+    }
+
+    fclose(filep);
+
+    free(str);
 }
