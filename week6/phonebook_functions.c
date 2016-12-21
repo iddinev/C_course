@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-#define NAME_SIZE 61
+#define NAME_SIZE 11
 #define NUMBER_SIZE 11
 
 
@@ -26,6 +26,23 @@ void printEntry(struct PhoneEntry *Entry)
     printf("Phone number: %s\n", Entry->PhoneNumber);
 }
 
+
+// Function to portably and properly flush stdin.
+/* void flushSTDIN(flushNewLine) */
+void flushSTDIN()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+    /* if (flushNewLine) */
+    /* { */
+        /* while ((c = getchar()) != '\n' && c != EOF) { } */
+    /* } */
+    /* else */
+    /* { */
+        /* while ((c = getchar()) != EOF) { } */
+    /* } */
+
+}
 
 void sanitizeString(char **input_str)
 {
@@ -55,16 +72,23 @@ void sanitizeString(char **input_str)
 void addEntry()
 {
     FILE *filep;
-    char *str = malloc(NAME_SIZE * sizeof(char));
+    char *str = (char*)malloc(NAME_SIZE * sizeof(char));
     struct PhoneEntry NewEntry;
 
     printf("Enter full name:\n");
     fgets(str, NAME_SIZE, stdin);
-    sanitizeString((char **)&str);
-    strcpy(NewEntry.fullName, str);
+    /* flushSTDIN(1); */
+    /* printf("%d" */
+    if  (strlen(str) == (NAME_SIZE - 1)) {flushSTDIN();}
+    /* sanitizeString((char **)&str); */
+    /* strcpy(NewEntry.fullName, str); */
+    printf("!%s!", str);
 
     printf("Enter phone number:\n");
-    scanf("%s", NewEntry.PhoneNumber);
+    /* printf("Enter phone number:"); */
+    fgets(NewEntry.PhoneNumber, NUMBER_SIZE, stdin);
+    printf("!%s!", NewEntry.PhoneNumber);
+    /* scanf("%s", NewEntry.PhoneNumber); */
 
     filep = fopen(PhoneBook, "a");
 

@@ -37,6 +37,7 @@ int main()
 
     printf("%s", menu);
     scanf("%d", &entry);
+    flushSTDIN();
 
     switch(entry)
     {
