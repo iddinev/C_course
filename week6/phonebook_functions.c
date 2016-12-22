@@ -49,6 +49,7 @@ void flushSTDIN()
 void sanitizeString(char **input_str)
 {
     char *work_str = malloc(NAME_SIZE * sizeof(char));
+    // We're concatinating so the memory should be nullified.
     nullifyPointer(work_str, NAME_SIZE);
     char *tmp;
     char delim[] = " \n";
@@ -112,12 +113,10 @@ void searchORdelete(char deleteEntry)
 
     printf("Enter full name:\n");
     fgets(str, NAME_SIZE, stdin);
-    printf("unsanitized !%s!", str);
     if (strlen(str) < (NAME_SIZE - 1)) {ungetc(10, stdin);}
     flushSTDIN();
     sanitizeString((char **)&str);
     strcpy(SearchEntry.fullName, str);
-    printf("sanitized !%s!", SearchEntry.fullName);
 
     filep = fopen(PhoneBook, "r");
 
@@ -170,7 +169,6 @@ int mainMenu()
     printf("%s", menu);
     // Quick hack to properly distinguish a single digit from anything else.
     entry = getchar() - 48;
-    printf("%d", entry);
     flushSTDIN();
 
     switch(entry)
