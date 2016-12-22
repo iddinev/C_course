@@ -15,7 +15,6 @@
 
 // TODO:
 // 1. Make the main menu work in a loop.
-// 2. All options should print success/fail messages.
 
 
 #include <stdio.h>
@@ -25,38 +24,8 @@
 
 int main()
 {
-    int entry;
-    char *menu = "Phonebook menu\n"
-                 "-----------------\n"
-                 "1. Add entry\n"
-                 "2. Search by name\n"
-                 "3. Delete entry\n"
-                 "4. Exit\n"
-                 "----------------\n"
-                 "Enter your choice:\n";
-
-    printf("%s", menu);
-    scanf("%d", &entry);
-    flushSTDIN();
-
-    switch(entry)
-    {
-        case 1:
-            addEntry();
-            break;
-        case 2:
-            searchORdelete(0);
-            break;
-        case 3:
-            searchORdelete(1);
-            break;
-        case 4:
-            printf("Exiting...\n");
-            break;
-
-        default:
-            return 1;
-    }
+    while (!mainMenu()) { }
+    /* mainMenu(); */
 
     return 0;
 }

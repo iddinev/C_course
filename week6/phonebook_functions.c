@@ -3,7 +3,7 @@
 #include <string.h>
 
 
-#define NAME_SIZE 11
+#define NAME_SIZE 61
 #define NUMBER_SIZE 11
 
 
@@ -22,26 +22,36 @@ struct PhoneEntry
 
 void printEntry(struct PhoneEntry *Entry)
 {
+    printf("++++++++++++\n");
     printf("Full name: %s\n", Entry->fullName);
     printf("Phone number: %s\n", Entry->PhoneNumber);
+    printf("++++++++++++\n");
 }
 
 
+void nullifyPointer(char **ptr, int size)
+{
+    for (int i=0; i<size; i++)
+    {
+        (*ptr)[i] = 0;
+    }
+}
+
 // Function to portably and properly flush stdin.
-/* void flushSTDIN(flushNewLine) */
+// It requries that the last char in the buffer is newline or EOF.
+// There should be atleast 1 char in the buffer when called.
 void flushSTDIN()
 {
     int c;
+    /* c = 1; */
+    /* while (c != '\n' && c != EOF) */
+    /* while ((c = getchar()) != '\n' && c != EOF) */
     while ((c = getchar()) != '\n' && c != EOF) { }
-    /* if (flushNewLine) */
     /* { */
-        /* while ((c = getchar()) != '\n' && c != EOF) { } */
+        /* c = getchar(); */
+        /* if ((c = '\n') || (c = EOF)) */
+        /* {printf("!");} */
     /* } */
-    /* else */
-    /* { */
-        /* while ((c = getchar()) != EOF) { } */
-    /* } */
-
 }
 
 void sanitizeString(char **input_str)
@@ -72,23 +82,24 @@ void sanitizeString(char **input_str)
 void addEntry()
 {
     FILE *filep;
+    // *str should have enough memory to store max(name_len, phone_len).
     char *str = (char*)malloc(NAME_SIZE * sizeof(char));
     struct PhoneEntry NewEntry;
 
     printf("Enter full name:\n");
     fgets(str, NAME_SIZE, stdin);
-    /* flushSTDIN(1); */
-    /* printf("%d" */
-    if  (strlen(str) == (NAME_SIZE - 1)) {flushSTDIN();}
-    /* sanitizeString((char **)&str); */
-    /* strcpy(NewEntry.fullName, str); */
-    printf("!%s!", str);
+    if (strlen(str) < (NAME_SIZE - 1)) {ungetc(10, stdin);}
+    flushSTDIN();
+    sanitizeString((char **)&str);
+    strcpy(NewEntry.fullName, str);
 
+    /* nullifyPointer((char **)&str, sizeof(str)); */
     printf("Enter phone number:\n");
-    /* printf("Enter phone number:"); */
-    fgets(NewEntry.PhoneNumber, NUMBER_SIZE, stdin);
-    printf("!%s!", NewEntry.PhoneNumber);
-    /* scanf("%s", NewEntry.PhoneNumber); */
+    fgets(str, NUMBER_SIZE, stdin);
+    if (strlen(str) < (NUMBER_SIZE - 1)) {ungetc(10, stdin);}
+    flushSTDIN();
+    sanitizeString((char **)&str);
+    strcpy(NewEntry.PhoneNumber, str);
 
     filep = fopen(PhoneBook, "a");
 
@@ -96,6 +107,7 @@ void addEntry()
 
     fclose(filep);
 
+    /* nullifyPointer((char **)&str, sizeof(str)); */
     free(str);
 }
 
@@ -109,8 +121,12 @@ void searchORdelete(char deleteEntry)
 
     printf("Enter full name:\n");
     fgets(str, NAME_SIZE, stdin);
+    printf("unsanitized !%s!", str);
+    if (strlen(str) < (NAME_SIZE - 1)) {ungetc(10, stdin);}
+    flushSTDIN();
     sanitizeString((char **)&str);
     strcpy(SearchEntry.fullName, str);
+    printf("sanitized !%s!", SearchEntry.fullName);
 
     filep = fopen(PhoneBook, "r");
 
@@ -120,11 +136,19 @@ void searchORdelete(char deleteEntry)
     {
         if (!strcmp(SearchEntry.fullName, InputEntry.fullName))
         {
-            if (deleteEntry)
+            if (!deleteEntry)
             {
-                fwrite(&InputEntry, sizeof(struct PhoneEntry), 1, tmp_filep);
+                printf("\nFound an account:\n");
+            }
+            else
+            {
+                printf("\nDeleted an account:\n");
             }
             printEntry((struct PhoneEntry*)&InputEntry);
+        }
+        else if (deleteEntry)
+        {
+            fwrite(&InputEntry, sizeof(struct PhoneEntry), 1, tmp_filep);
         }
     }
 
@@ -136,5 +160,48 @@ void searchORdelete(char deleteEntry)
 
     fclose(filep);
 
+    /* nullifyPointer((char **)&str, sizeof(str)); */
     free(str);
+}
+
+int mainMenu()
+{
+    int entry;
+    char *menu = "================\n"
+                 "Phonebook menu\n"
+                 "-----------------\n"
+                 "1. Add entry\n"
+                 "2. Search by name\n"
+                 "3. Delete entry\n"
+                 "4. Exit\n"
+                 "----------------\n"
+                 "Enter your choice:\n";
+
+    printf("%s", menu);
+    scanf("%d", &entry);
+    flushSTDIN();
+
+    switch(entry)
+    {
+        case 1:
+            addEntry();
+            return 0;
+            break;
+        case 2:
+            searchORdelete(0);
+            return 0;
+            break;
+        case 3:
+            searchORdelete(1);
+            return 0;
+            break;
+        case 4:
+            printf("Exiting...\n");
+            return 0;
+            break;
+
+        default:
+            printf("Invalid option. Exiting...\n");
+            return 1;
+    }
 }
