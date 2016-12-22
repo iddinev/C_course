@@ -29,11 +29,11 @@ void printEntry(struct PhoneEntry *Entry)
 }
 
 
-void nullifyPointer(char **ptr, int size)
+void nullifyPointer(char *ptr, int size)
 {
     for (int i=0; i<size; i++)
     {
-        (*ptr)[i] = 0;
+        ptr[i] = 0;
     }
 }
 
@@ -43,20 +43,13 @@ void nullifyPointer(char **ptr, int size)
 void flushSTDIN()
 {
     int c;
-    /* c = 1; */
-    /* while (c != '\n' && c != EOF) */
-    /* while ((c = getchar()) != '\n' && c != EOF) */
     while ((c = getchar()) != '\n' && c != EOF) { }
-    /* { */
-        /* c = getchar(); */
-        /* if ((c = '\n') || (c = EOF)) */
-        /* {printf("!");} */
-    /* } */
 }
 
 void sanitizeString(char **input_str)
 {
     char *work_str = malloc(NAME_SIZE * sizeof(char));
+    nullifyPointer(work_str, NAME_SIZE);
     char *tmp;
     char delim[] = " \n";
     int len;
@@ -93,7 +86,6 @@ void addEntry()
     sanitizeString((char **)&str);
     strcpy(NewEntry.fullName, str);
 
-    /* nullifyPointer((char **)&str, sizeof(str)); */
     printf("Enter phone number:\n");
     fgets(str, NUMBER_SIZE, stdin);
     if (strlen(str) < (NUMBER_SIZE - 1)) {ungetc(10, stdin);}
@@ -107,7 +99,6 @@ void addEntry()
 
     fclose(filep);
 
-    /* nullifyPointer((char **)&str, sizeof(str)); */
     free(str);
 }
 
@@ -160,7 +151,6 @@ void searchORdelete(char deleteEntry)
 
     fclose(filep);
 
-    /* nullifyPointer((char **)&str, sizeof(str)); */
     free(str);
 }
 
@@ -178,7 +168,9 @@ int mainMenu()
                  "Enter your choice:\n";
 
     printf("%s", menu);
-    scanf("%d", &entry);
+    // Quick hack to properly distinguish a single digit from anything else.
+    entry = getchar() - 48;
+    printf("%d", entry);
     flushSTDIN();
 
     switch(entry)

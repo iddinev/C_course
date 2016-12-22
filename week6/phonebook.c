@@ -13,10 +13,6 @@
 // Enter your choice:
 
 
-// TODO:
-// 1. Make the main menu work in a loop.
-
-
 #include <stdio.h>
 
 #include "phonebook_functions.c"
@@ -25,7 +21,6 @@
 int main()
 {
     while (!mainMenu()) { }
-    /* mainMenu(); */
 
     return 0;
 }
