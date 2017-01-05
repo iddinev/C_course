@@ -5,7 +5,7 @@
 
 #define BUFF_SIZE 11
 #define DEFAULT_WORD_LEN 4
-#define RANDOM_SCALE 100
+#define RANDOM_SCALE 4
 
 
 
@@ -17,42 +17,100 @@ const char *used_words_file = "./used_words.dat";
 
 int randomScaled(int mod)
 {
-    int rand;
-    rand = rand() % mod;
-    return rand;
+    int ran;
+    ran = rand() % mod;
+    return ran;
 }
 
 
+// Pick a random word (not belonging to the used_words file) newline stripped.
+// If no word is picked, a safe option is returned - the first word
+// that was read from the dictionary with ok len and not already used.
+// If there is no safe option - returns NULL.
+// Function looks a bit messy but - code now, refactor later.
 char* pickRandomWord(int minLen)
 {
-    char *current = (char*)malloc(BUFF_SIZE*sizeof(char));
-    char *last_safe = (char*)malloc(BUFF_SIZE*sizeof(char));
+    char *chosen = (char*)malloc(minLen*sizeof(char));
+    char *safe = (char*)malloc(minLen*sizeof(char));
+    char *current = NULL;
+    char *tmp = NULL;
+    char match = 0;
+    char safeOK = 0;
+    char chosenOK = 0;
     size_t n_bytes = BUFF_SIZE;
     FILE *dict_flp, *used_flp;
-    
-    dict_flp = fopen(dict_file, "r");
-    used_flp = fopen(used_words_file, "r");
 
-    
-    
+    dict_flp = fopen(dict_file, "r");
+    used_flp = fopen(used_words_file, "a+");
+
     while (getline((char**)&current, (size_t*)&n_bytes, dict_flp) != -1)
     {
-        if (len(current) < minLen) 
+        if (chosenOK)
+        {
+            break;
+        }
+
+        if (strlen(current) < minLen)
         {
             continue;
         }
-        else if (randomScaled(RANDOM_SCALE) = 1)
+
+        if (!safeOK)
         {
-            while (getline((char**)&last_safe, (size_t*)&n_bytes, used_flp) != -1)
+            match = 0;
+            fseek(used_flp, 0, SEEK_SET);
+            while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
             {
-                if (!strcmp(current, last_safe))
+                if (!strcmp(current, tmp))
                 {
+                    match = 1;
+                    break;
+                }
+            }
+            if (!match)
+            {
+                strcpy(safe, current);
+                safeOK = 1;
+            }
+        }
 
+        if (randomScaled(RANDOM_SCALE) == 1)
+        {
+            match = 0;
+            fseek(used_flp, 0, SEEK_SET);
+            while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
+            {
+                if (!strcmp(current, tmp))
+                {
+                    match = 1;
+                    break;
+                }
+            }
+            if (!match)
+            {
+                strcpy(chosen, current);
+                chosenOK = 1;
+            }
+        }
+    }
 
+    if (!chosenOK)
+    {
+        free(chosen);
+        safe[strlen(safe)-1] = '\0';
+        return safe;
+    }
+    else
+    {
+        free(safe);
+        chosen[strlen(chosen)-1] = '\0';
+        return chosen;
+    }
 
-    return current;
+    free(tmp);
+    free(current);
 }
-    
+
 
 void nullifyPointer(char *ptr, int size)
 {
@@ -96,8 +154,9 @@ int mainMenu()
         case 1:
             /* changeWordLen(); */
             srand(time(NULL));
-            word = (char *)pickRandomWord(5);
+            word = (char *)pickRandomWord(4);
             printf("Chosen word is '%s'", word);
+            free(word);
             return 0;
             break;
         case 2:
