@@ -3,15 +3,14 @@
 #include <string.h>
 
 
-#define BUFF_SIZE 11
 #define DEFAULT_WORD_LEN 4
-#define RANDOM_SCALE 4
+#define RANDOM_SCALE 2
 
 
 
 // Data is stored in a binary format.
 const char *dict_file = "./dictionary.dat";
-const char *used_words_file = "./used_words.dat";
+const char *used_words_file = "./guessedwords.dat";
 
 
 
@@ -37,11 +36,13 @@ char* pickRandomWord(int minLen)
     char match = 0;
     char safeOK = 0;
     char chosenOK = 0;
-    size_t n_bytes = BUFF_SIZE;
+    size_t n_bytes = minLen;
     FILE *dict_flp, *used_flp;
 
+    srand(time(NULL));
+
     dict_flp = fopen(dict_file, "r");
-    used_flp = fopen(used_words_file, "a+");
+    used_flp = fopen(used_words_file, "r");
 
     while (getline((char**)&current, (size_t*)&n_bytes, dict_flp) != -1)
     {
@@ -107,6 +108,9 @@ char* pickRandomWord(int minLen)
         return chosen;
     }
 
+    fclose(dict_flp);
+    fclose(used_flp);
+
     free(tmp);
     free(current);
 }
@@ -135,37 +139,46 @@ void flushSTDIN()
 int mainMenu()
 {
     int entry;
+    FILE *used_flp;
     char *word;
     char *menu = "================\n"
-                 "Hangman menu\n"
+                 "Hangman menu:\n"
                  "-----------------\n"
-                 "1. Change min word length (now at 4).\n"
-                 "2. Exit.\n"
+                 "1. Play a game.\n"
+                 "2. Change minimal word length (now at 4).\n"
+                 "3. Exit.\n"
                  "----------------\n"
                  "Enter your choice:\n";
 
     printf("%s", menu);
     // Quick hack to properly distinguish a single digit from anything else.
     entry = getchar() - 48;
+    ungetc(10, stdin);
+    /* printf("'%d'", entry); */
     flushSTDIN();
+
+    used_flp = fopen(used_words_file, "a+");
+    fclose(used_flp);
 
     switch(entry)
     {
         case 1:
             /* changeWordLen(); */
-            srand(time(NULL));
             word = (char *)pickRandomWord(4);
             printf("Chosen word is '%s'", word);
             free(word);
             return 0;
             break;
         case 2:
+            return 0;
+            break;
+        case 3:
             printf("Exiting...\n");
             return 0;
             break;
 
         default:
-            // Play the game.
-            return 0;
+            return 1;
     }
+    /* return 0; */
 }
