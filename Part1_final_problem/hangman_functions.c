@@ -4,13 +4,14 @@
 
 
 #define DEFAULT_WORD_LEN 4
-#define RANDOM_SCALE 2
+#define RANDOM_SCALE 1
 
 
 
-// Data is stored in a binary format.
+// Data is stored in ascii.
 const char *dict_file = "./dictionary.dat";
 const char *used_words_file = "./guessedwords.dat";
+const char *gallows_file = "./gallows.dat";
 
 
 
@@ -20,6 +21,41 @@ int randomScaled(int mod)
     ran = rand() % mod;
     return ran;
 }
+
+
+void nullifyPointer(char *ptr, int size)
+{
+    for (int i=0; i<size; i++)
+    {
+        ptr[i] = 0;
+    }
+}
+
+
+// Function to portably and properly flush stdin.
+// It requries that the last char in the buffer is newline or EOF.
+// There should be atleast 1 char in the buffer when called.
+void flushSTDIN()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+}
+
+
+void printGallows()
+{
+    FILE *gallows_flp;
+    static int file_pos;
+    int n_bytes = DEFAULT_WORD_LEN;
+    char *gallows = NULL;
+
+    gallows_flp = fopen(gallows_file, "r");
+    for (int i=0; i<=6; i++)
+    {
+        getline((char**)&gallows, (size_t*)&n_bytes, gallows_flp);
+    file_pos = SEEK_CUR;
+
+
 
 
 // Pick a random word (not belonging to the used_words file) newline stripped.
@@ -46,6 +82,7 @@ char* pickRandomWord(int minLen)
 
     while (getline((char**)&current, (size_t*)&n_bytes, dict_flp) != -1)
     {
+        current[strcspn(current, "\r\n")] = '\0';
         if (chosenOK)
         {
             break;
@@ -62,6 +99,7 @@ char* pickRandomWord(int minLen)
             fseek(used_flp, 0, SEEK_SET);
             while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
             {
+                tmp[strcspn(tmp, "\r\n")] = '\0';
                 if (!strcmp(current, tmp))
                 {
                     match = 1;
@@ -81,6 +119,7 @@ char* pickRandomWord(int minLen)
             fseek(used_flp, 0, SEEK_SET);
             while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
             {
+                tmp[strcspn(tmp, "\r\n")] = '\0';
                 if (!strcmp(current, tmp))
                 {
                     match = 1;
@@ -98,13 +137,11 @@ char* pickRandomWord(int minLen)
     if (!chosenOK)
     {
         free(chosen);
-        safe[strlen(safe)-1] = '\0';
         return safe;
     }
     else
     {
         free(safe);
-        chosen[strlen(chosen)-1] = '\0';
         return chosen;
     }
 
@@ -116,26 +153,6 @@ char* pickRandomWord(int minLen)
 }
 
 
-void nullifyPointer(char *ptr, int size)
-{
-    for (int i=0; i<size; i++)
-    {
-        ptr[i] = 0;
-    }
-}
-
-
-// Function to portably and properly flush stdin.
-// It requries that the last char in the buffer is newline or EOF.
-// There should be atleast 1 char in the buffer when called.
-void flushSTDIN()
-{
-    int c;
-    while ((c = getchar()) != '\n' && c != EOF) { }
-}
-
-
-// Space is cheap so we're going to use a tmp file for swapping.
 int mainMenu()
 {
     int entry;
@@ -154,7 +171,6 @@ int mainMenu()
     // Quick hack to properly distinguish a single digit from anything else.
     entry = getchar() - 48;
     ungetc(10, stdin);
-    /* printf("'%d'", entry); */
     flushSTDIN();
 
     used_flp = fopen(used_words_file, "a+");
@@ -165,11 +181,12 @@ int mainMenu()
         case 1:
             /* changeWordLen(); */
             word = (char *)pickRandomWord(4);
-            printf("Chosen word is '%s'", word);
+            printf("Chosen word is '%s'\n", word);
             free(word);
             return 0;
             break;
         case 2:
+            drawGallows();
             return 0;
             break;
         case 3:
@@ -180,5 +197,4 @@ int mainMenu()
         default:
             return 1;
     }
-    /* return 0; */
 }
