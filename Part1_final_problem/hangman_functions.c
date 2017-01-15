@@ -4,7 +4,8 @@
 
 
 #define DEFAULT_WORD_LEN 4
-#define RANDOM_SCALE 1
+#define RANDOM_SCALE 35000
+/* #define RANDOM_SCALE 1 */
 
 
 
@@ -42,20 +43,38 @@ void flushSTDIN()
 }
 
 
-void printGallows()
+char* getGallows(int next)
 {
     FILE *gallows_flp;
-    static int file_pos;
-    int n_bytes = DEFAULT_WORD_LEN;
-    char *gallows = NULL;
+    static int file_cur_pos = 0;
+    static int file_prev_pos = 0;
+    int n_bytes = 0;
+    char *gallows = (char*)malloc(sizeof(char));
 
     gallows_flp = fopen(gallows_file, "r");
+
+    if (next)
+    {
+        fseek(gallows_flp, file_cur_pos, SEEK_SET);
+    }
+    else
+    {
+        fseek(gallows_flp, file_prev_pos, SEEK_SET);
+    }
+
+    file_prev_pos = ftell(gallows_flp);
+
     for (int i=0; i<=6; i++)
     {
         getline((char**)&gallows, (size_t*)&n_bytes, gallows_flp);
-    file_pos = SEEK_CUR;
+        gallows[strcspn(gallows, "\r\n")] = '\0';
+        printf("%s\n", gallows);
+    }
 
 
+    file_cur_pos = (int)ftell(gallows_flp);
+    free(gallows);
+}
 
 
 // Pick a random word (not belonging to the used_words file) newline stripped.
@@ -157,7 +176,7 @@ int mainMenu()
 {
     int entry;
     FILE *used_flp;
-    char *word;
+    char *word = NULL;
     char *menu = "================\n"
                  "Hangman menu:\n"
                  "-----------------\n"
@@ -170,7 +189,6 @@ int mainMenu()
     printf("%s", menu);
     // Quick hack to properly distinguish a single digit from anything else.
     entry = getchar() - 48;
-    ungetc(10, stdin);
     flushSTDIN();
 
     used_flp = fopen(used_words_file, "a+");
@@ -179,14 +197,14 @@ int mainMenu()
     switch(entry)
     {
         case 1:
-            /* changeWordLen(); */
             word = (char *)pickRandomWord(4);
             printf("Chosen word is '%s'\n", word);
             free(word);
             return 0;
             break;
         case 2:
-            drawGallows();
+            printGallows(0);
+            printGallows(1);
             return 0;
             break;
         case 3:

@@ -9,8 +9,8 @@
 
 int main()
 {
-    mainMenu();
+    /* mainMenu(); */
+    while (!mainMenu()) { }
 
     return 0;
 }
-
