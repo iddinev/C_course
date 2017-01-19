@@ -45,28 +45,30 @@ void flushSTDIN()
 
 // This function is void as to leave the mem alocation and freeing
 // to the caller.
-void invert_str(char **msg, int len)
+/* void invert_str(char *msg, int len) */
+void invert_str(char *msg)
 {
+    if (!msg) {return;}
+
+    int len = strlen(msg);
     char *invert = (char*)malloc(len * sizeof(char));
     int i;
 
-    if (*msg == NULL) {return;}
-
     for (i=0; i<len; i++)
     {
-        invert[len-i-1] = (*msg)[i];
+        invert[len-i-1] = msg[i];
     }
 
     invert[len] = '\0';
 
-    strcpy(*msg, invert);
+    strcpy(msg, invert);
 
     free(invert);
 }
 
 
-/* char* getGallows(int next) */
-void printGallows(int next)
+char* getGallows(int next)
+/* void printGallows(int next) */
 {
     FILE *gallows_flp;
     static int file_cur_pos = 0;
@@ -93,11 +95,9 @@ void printGallows(int next)
     {
         getline((char**)&gallows, (size_t*)&n_bytes, gallows_flp);
         gallows[strcspn(gallows, "\r\n")] = '\0';
-        invert_str((char**)&gallows, strlen(gallows));
+        invert_str(gallows);
         printf("%s\n", gallows);
     }
-    invert_str((char**)&tmp, strlen(tmp));
-
 
     file_cur_pos = (int)ftell(gallows_flp);
     free(gallows);
