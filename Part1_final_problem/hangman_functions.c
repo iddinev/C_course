@@ -67,16 +67,18 @@ void invert_str(char *msg)
 }
 
 
-char* getGallows(int next)
-/* void printGallows(int next) */
+// Get malloced memory and copy the inverted gallow in it.
+// Can return the current gallow or go and return the next until EOF.
+// if there are no more gallows - free the mem and return NULL.
+void getGallows(char *gallows, int next)
 {
     FILE *gallows_flp;
     static int file_cur_pos = 0;
     static int file_prev_pos = 0;
     int n_bytes = 0;
-    char *tmp = NULL;
-    /* char *tmp = (char*)malloc(sizeof(char)); */
-    char *gallows = (char*)malloc(sizeof(char));
+    char swap;
+    char *tmp = (char*)malloc(sizeof(char));
+    gallows[0] = '\0';
 
     gallows_flp = fopen(gallows_file, "r");
 
@@ -93,14 +95,28 @@ char* getGallows(int next)
 
     for (int i=0; i<=6; i++)
     {
-        getline((char**)&gallows, (size_t*)&n_bytes, gallows_flp);
-        gallows[strcspn(gallows, "\r\n")] = '\0';
-        invert_str(gallows);
-        printf("%s\n", gallows);
+        getline((char**)&tmp, (size_t*)&n_bytes, gallows_flp);
+        if (strlen(tmp) < 7)
+        {
+            free(gallows);
+            gallows = NULL;
+            break;
+        }
+        tmp[strcspn(tmp, "\r\n")] = '\0';
+        // Legs and hands shouldn't be inverted.
+        if (i == 3 || i == 4)
+        {
+            swap = tmp[1];
+            tmp[1] = tmp[3];
+            tmp[3] = swap;
+        }
+        invert_str(tmp);
+        strcat(gallows, tmp);
+        strcat(gallows, "\n");
     }
 
     file_cur_pos = (int)ftell(gallows_flp);
-    free(gallows);
+    free(tmp);
 }
 
 
@@ -203,6 +219,7 @@ int mainMenu()
 {
     int entry;
     FILE *used_flp;
+    char *gallows = (char*)malloc(7*9*sizeof(char));
     char *word = NULL;
     char *menu = "================\n"
                  "Hangman menu:\n"
@@ -230,8 +247,6 @@ int mainMenu()
             return 0;
             break;
         case 2:
-            printGallows(0);
-            printGallows(1);
             return 0;
             break;
         case 3:
