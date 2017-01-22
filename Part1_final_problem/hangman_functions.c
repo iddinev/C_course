@@ -7,6 +7,7 @@
 #define DEFAULT_WORD_LEN 4
 /* #define RANDOM_SCALE 35000 */
 #define RANDOM_SCALE 1
+#define GALLOWS_SIZE 63
 
 
 // Constants and structs.
@@ -64,7 +65,7 @@ char* pickRandomWord(int minLen);
 //'guessed' should have the same length (not counting the '\0') as '*word'.
 void printWord(struct list_node *word, char guessed[]);
 
-struct list_node *WordToList(char *word)
+struct list_node *WordToList(char *word);
 
 int mainMenu();
 
@@ -118,6 +119,21 @@ void freeStack(struct list_node **top_node)
     struct list_node *tmp_node;
 
     while (*top_node)
+    {
+        tmp_node = *top_node;
+        *top_node = tmp_node->next_node;
+        free(tmp_node);
+    }
+
+    *top_node = NULL;
+}
+
+
+void copyStack(struct list_node **source_node, struct list_node **dest_node)
+{
+    struct list_node *tmp_node;
+
+    while (*source_node)
     {
         tmp_node = *top_node;
         *top_node = tmp_node->next_node;
@@ -238,11 +254,10 @@ char* pickRandomWord(int minLen)
 
     srand(time(NULL));
 
-    used_flp = fopen(used_words_file, "a+");
-    fclose(used_flp);
 
     dict_flp = fopen(dict_file, "r");
-    used_flp = fopen(used_words_file, "r");
+    // Create the file if not already existing.
+    used_flp = fopen(used_words_file, "a+");
 
     while (getline((char**)&current, (size_t*)&n_bytes, dict_flp) != -1)
     {
@@ -354,14 +369,33 @@ struct list_node *WordToList(char *word)
 }
 
 
+void playHangman(int word_len)
+{
+    struct list_node *word_list = NULL;
+    struct list_node *picked_letters = NULL;
+    struct list_node *tmp = NULL;
+    char *gallows = (char*)malloc(GALLOWS_SIZE * sizeof(char));
+    char *word = NULL;
+    char *guessed = NULL;
+    char letter;
+    char rem_tries = 7;
+
+    word = (char *)pickRandomWord(word_len);
+    *guessed = (char*)malloc(strlen(word) * sizeof(char));
+    word_list = WordToList(word);
+
+    while (rem_tries)
+    {
+        printf("Pick a letter: ");
+        scanf("%c", &letter);
+
+
+}
+
+
 int mainMenu()
 {
-    int entry;
-    FILE *used_flp;
-    char *gallows = (char*)malloc(7*9*sizeof(char));
-    struct list_node *word_list = NULL;
-    char array[] = {0,0,0,0,1,0};
-    char *word = NULL;
+    int entry, word_len;
     char *menu = "================\n"
                  "Hangman menu:\n"
                  "-----------------\n"
@@ -380,19 +414,13 @@ int mainMenu()
     switch(entry)
     {
         case 1:
-            word = (char *)pickRandomWord(DEFAULT_WORD_LEN);
-            printf("Chosen word is '%s'\n", word);
-            word_list = WordToList(word);
-            printWord((struct list_node *)word_list, array);
-            free(word);
+            playHangman(DEFAULT_WORD_LEN);
             return 0;
             break;
         case 2:
-            for (int i=0; i<=8; i++)
-            {
-                getGallows(gallows, 1);
-                printf("%s", gallows);
-            }
+            printf("New word length: ");
+            scanf("%d", &word_len);
+            playHangman(word_len);
             return 0;
             break;
         case 3:
