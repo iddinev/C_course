@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 
 
@@ -8,6 +9,7 @@
 /* #define RANDOM_SCALE 35000 */
 #define RANDOM_SCALE 1
 #define GALLOWS_SIZE 63
+#define NUMBER_OF_TRIES 63
 
 
 // Constants and structs.
@@ -35,11 +37,8 @@ char pop(struct list_node **top_node);
 
 void freeStack(struct list_node **top_node);
 
-// Return an int from a uniform [0;mod] distribution.
+// Return an int from a uniform [0;mod-1] distribution.
 int randomScaled(int mod);
-
-// Zero out a pointer byte by byte.
-void nullifyPointer(char *ptr, int size);
 
 // Function to portably and properly flush stdin.
 // It requries that the last char in the buffer is newline or EOF.
@@ -48,7 +47,7 @@ void flushSTDIN();
 
 // Function is void as to leave the mem alocation and freeing
 // to the caller.
-void invert_str(char *msg);
+void invertString(char *msg);
 
 // Get malloced memory and copy the inverted gallow in it.
 // Can return the current gallow or go and return the next until EOF.
@@ -129,35 +128,11 @@ void freeStack(struct list_node **top_node)
 }
 
 
-void copyStack(struct list_node **source_node, struct list_node **dest_node)
-{
-    struct list_node *tmp_node;
-
-    while (*source_node)
-    {
-        tmp_node = *top_node;
-        *top_node = tmp_node->next_node;
-        free(tmp_node);
-    }
-
-    *top_node = NULL;
-}
-
-
 int randomScaled(int mod)
 {
     int ran;
     ran = rand() % mod;
     return ran;
-}
-
-
-void nullifyPointer(char *ptr, int size)
-{
-    for (int i=0; i<size; i++)
-    {
-        ptr[i] = 0;
-    }
 }
 
 
@@ -168,7 +143,7 @@ void flushSTDIN()
 }
 
 
-void invert_str(char *msg)
+void invertString(char *msg)
 {
     if (!msg) {return;}
 
@@ -197,7 +172,7 @@ void getGallows(char *gallows, int next)
     int n_bytes = 0;
     char swap;
     char *tmp = (char*)malloc(sizeof(char));
-    gallows = (char*)realloc(gallows, 7*9*sizeof(char));
+    gallows = (char*)realloc(gallows, GALLOWS_SIZE * sizeof(char));
     gallows[0] = '\0';
 
     gallows_flp = fopen(gallows_file, "r");
@@ -230,7 +205,7 @@ void getGallows(char *gallows, int next)
             tmp[1] = tmp[3];
             tmp[3] = swap;
         }
-        invert_str(tmp);
+        invertString(tmp);
         strcat(gallows, tmp);
         strcat(gallows, "\n");
     }
@@ -331,7 +306,29 @@ char* pickRandomWord(int minLen)
     free(current);
 }
 
+// Check the word for letters and set the appropriate flags in 'guessed'.
+// RETURN is number of positions of the letter if found, otherwise 0.
+// 'guessed' should have the same length as 'word' not counting the '\0'.
+int checkForLetter(struct list_node *word, char letter, char *guessed)
+{
+    int found_letter = 0;
+    int i = 0;
+    char lower_letter;
 
+    while (word)
+    {
+        lower_letter = word->node_val;
+        lowerCase((char *)&lower_letter);
+        if (lower_letter == letter)
+        {
+            guessed[i] = 1;
+            found_letter++;
+        }
+        i++;
+        word = word->next_node;
+    }
+    return found_letter;
+}
 void printWord(struct list_node *word, char guessed[])
 {
     int remaining = 0;
@@ -369,27 +366,57 @@ struct list_node *WordToList(char *word)
 }
 
 
+// Wrapper function of tolower(int c).
+void lowerCase(char *letter)
+{
+    int tmp;
+
+    tmp = tolower((int) *letter);
+
+    *letter = (char)tmp;
+}
+
+
 void playHangman(int word_len)
 {
     struct list_node *word_list = NULL;
+    /* struct list_node *tmp_word_list = NULL; */
     struct list_node *picked_letters = NULL;
     struct list_node *tmp = NULL;
     char *gallows = (char*)malloc(GALLOWS_SIZE * sizeof(char));
     char *word = NULL;
     char *guessed = NULL;
     char letter;
-    char rem_tries = 7;
+    char rem_tries = NUMBER_OF_TRIES;
+    int positions;
 
     word = (char *)pickRandomWord(word_len);
-    *guessed = (char*)malloc(strlen(word) * sizeof(char));
+    if (!word)
+    {
+        printf("No suitable word found.\n");
+        return
+    }
+    guessed = (char *)malloc(strlen(word) * sizeof(char));
+    for (int i=0; i<strlen(word); i++) {guessed[i] = 0;}
     word_list = WordToList(word);
+    /* tmp_word_list = word_list; */
 
     while (rem_tries)
     {
         printf("Pick a letter: ");
         scanf("%c", &letter);
+        flushSTDIN();
+        lowerCase((char *)&letter);
+
+        positions = checkForLetter(word_list, letter, guessed);
+
+        if (!positions)
+        {
 
 
+
+
+    }
 }
 
 
