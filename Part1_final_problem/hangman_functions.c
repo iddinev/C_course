@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -6,10 +7,9 @@
 
 
 #define DEFAULT_WORD_LEN 4
-/* #define RANDOM_SCALE 35000 */
-#define RANDOM_SCALE 1
+#define RANDOM_SCALE 35000
 #define GALLOWS_SIZE 63
-#define NUMBER_OF_TRIES 63
+#define NUMBER_OF_TRIES 7
 
 
 // Constants and structs.
@@ -33,7 +33,7 @@ struct list_node
 
 void push(struct list_node **top_node, char letter);
 
-char pop(struct list_node **top_node);
+void printStack(struct list_node *top_node);
 
 void freeStack(struct list_node **top_node);
 
@@ -61,10 +61,22 @@ void getGallows(char *gallows, int next);
 // Function looks a bit messy but - code now, refactor later.
 char* pickRandomWord(int minLen);
 
+// Check the word for letters and set the appropriate flags in 'guessed'.
+// RETURN is number of positions of the letter if found, otherwise 0.
+// 'guessed' should have the same length as 'word' not counting the '\0'.
+int checkForLetter(struct list_node *word, char letter, char *guessed);
+
+int isLetterPlayed(struct list_node *picked_letters, char letter);
+
 //'guessed' should have the same length (not counting the '\0') as '*word'.
 void printWord(struct list_node *word, char guessed[]);
 
 struct list_node *WordToList(char *word);
+
+// Wrapper function of tolower(int c).
+void lowerCase(char *letter);
+
+int playHangman(int word_len);
 
 int mainMenu();
 
@@ -94,22 +106,16 @@ void push(struct list_node **top_node, char letter)
 }
 
 
-char pop(struct list_node **top_node)
+void printStack(struct list_node *top_node)
 {
-    char letter;
-    if (*top_node)
+    printf("Letters already played: ");
+    while (top_node)
     {
-        letter = (*top_node)->node_val;
-        struct list_node *tmp_node = *top_node;
-        *top_node = (*top_node)->next_node;
-        free(tmp_node);
-    }
-    else
-    {
-        letter = '\0';
+        printf("%c ", top_node->node_val);
+        top_node = top_node->next_node;
     }
 
-    return letter;
+    printf("\n");
 }
 
 
@@ -306,9 +312,7 @@ char* pickRandomWord(int minLen)
     free(current);
 }
 
-// Check the word for letters and set the appropriate flags in 'guessed'.
-// RETURN is number of positions of the letter if found, otherwise 0.
-// 'guessed' should have the same length as 'word' not counting the '\0'.
+
 int checkForLetter(struct list_node *word, char letter, char *guessed)
 {
     int found_letter = 0;
@@ -329,6 +333,26 @@ int checkForLetter(struct list_node *word, char letter, char *guessed)
     }
     return found_letter;
 }
+
+
+int isLetterPlayed(struct list_node *picked_letters, char letter)
+{
+    int played = 0;
+
+    while (picked_letters)
+    {
+        if (letter == picked_letters->node_val)
+        {
+            played = 1;
+            break;
+        }
+        picked_letters = picked_letters->next_node;
+    }
+
+    return played;
+}
+
+
 void printWord(struct list_node *word, char guessed[])
 {
     int remaining = 0;
@@ -366,7 +390,6 @@ struct list_node *WordToList(char *word)
 }
 
 
-// Wrapper function of tolower(int c).
 void lowerCase(char *letter)
 {
     int tmp;
@@ -377,46 +400,110 @@ void lowerCase(char *letter)
 }
 
 
-void playHangman(int word_len)
+int playHangman(int word_len)
 {
     struct list_node *word_list = NULL;
-    /* struct list_node *tmp_word_list = NULL; */
     struct list_node *picked_letters = NULL;
     struct list_node *tmp = NULL;
+    FILE *used_flp;
     char *gallows = (char*)malloc(GALLOWS_SIZE * sizeof(char));
     char *word = NULL;
     char *guessed = NULL;
     char letter;
     char rem_tries = NUMBER_OF_TRIES;
     int positions;
+    int outcome = 0;
+    int rem_letters;
+
 
     word = (char *)pickRandomWord(word_len);
     if (!word)
     {
         printf("No suitable word found.\n");
-        return
+        return outcome;
     }
+
+    rem_letters = strlen(word);
+
     guessed = (char *)malloc(strlen(word) * sizeof(char));
     for (int i=0; i<strlen(word); i++) {guessed[i] = 0;}
-    word_list = WordToList(word);
-    /* tmp_word_list = word_list; */
 
-    while (rem_tries)
+    word_list = WordToList(word);
+
+    do
     {
+        printf("+++++++++++++++++++++++++++++++\n");
         printf("Pick a letter: ");
         scanf("%c", &letter);
         flushSTDIN();
         lowerCase((char *)&letter);
 
-        positions = checkForLetter(word_list, letter, guessed);
+        if (isLetterPlayed((struct list_node *)picked_letters, letter))
+        {
+            printf("This letter was already picked.\n");
+            printStack((struct list_node *)picked_letters);
+            printf("Remaining tries: %d\n", rem_tries);
+            continue;
+        }
+
+        positions = checkForLetter((struct list_node *)word_list,
+                    letter, (char *)guessed);
+        rem_letters -= positions;
 
         if (!positions)
         {
+            rem_tries--;
 
+            printWord((struct list_node *)word_list, (char *)guessed);
 
+            push((struct list_node **)&picked_letters, letter);
+            printStack((struct list_node *)picked_letters);
 
+            getGallows((char *)gallows, 1);
+            printf("%s", gallows);
 
+            printf("Remaining tries: %d\n", rem_tries);
+        }
+        else
+        {
+            printWord((struct list_node *)word_list, (char *)guessed);
+
+            push((struct list_node **)&picked_letters, letter);
+            printStack((struct list_node *)picked_letters);
+
+            getGallows((char *)gallows, 0);
+            printf("%s", gallows);
+
+            printf("Remaining tries: %d\n", rem_tries);
+        }
+
+    } while(rem_tries && rem_letters);
+
+    if (!rem_letters)
+    {
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        printf("!!!!Congratulations, you won!!!!\n");
+        printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        used_flp = fopen(used_words_file, "a+");
+        fprintf(used_flp, "%s\n", word);
+        fclose(used_flp);
     }
+    else
+    {
+        printf("--------------------------------\n");
+        printf("-------Well... you tried..------\n");
+        printf("--------------------------------\n");
+        printf("Word was %s.\n", word);
+    }
+
+    free(word);
+    free(gallows);
+    free(guessed);
+
+    freeStack((struct list_node **)&word_list);
+    freeStack((struct list_node **)&picked_letters);
+
+    return outcome;
 }
 
 
