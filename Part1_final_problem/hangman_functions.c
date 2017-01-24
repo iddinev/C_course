@@ -51,8 +51,8 @@ void invertString(char *msg);
 
 // Get malloced memory and copy the inverted gallow in it.
 // Can return the current gallow or go and return the next until EOF.
-// if there are no more gallows - free the mem and return NULL.
-void getGallows(char *gallows, int next);
+// if the last gallows is reached returns 1; otherwise 0;
+int getGallows(char *gallows, int next);
 
 // Pick a random word (not belonging to the used_words file) newline stripped.
 // If no word is picked, a safe option is returned - the first word
@@ -170,15 +170,15 @@ void invertString(char *msg)
 }
 
 
-void getGallows(char *gallows, int next)
+int getGallows(char *gallows, int next)
 {
     FILE *gallows_flp;
     static int file_cur_pos = 0;
     static int file_prev_pos = 0;
     int n_bytes = 0;
+    int last_gallows = 0;
     char swap;
     char *tmp = (char*)malloc(sizeof(char));
-    gallows = (char*)realloc(gallows, GALLOWS_SIZE * sizeof(char));
     gallows[0] = '\0';
 
     gallows_flp = fopen(gallows_file, "r");
@@ -199,8 +199,7 @@ void getGallows(char *gallows, int next)
         getline((char**)&tmp, (size_t*)&n_bytes, gallows_flp);
         if (strlen(tmp) < 7)
         {
-            free(gallows);
-            gallows = NULL;
+            last_gallows = 1;
             break;
         }
         tmp[strcspn(tmp, "\r\n")] = '\0';
@@ -218,6 +217,7 @@ void getGallows(char *gallows, int next)
 
     file_cur_pos = (int)ftell(gallows_flp);
     free(tmp);
+    return last_gallows;
 }
 
 
@@ -230,6 +230,7 @@ char* pickRandomWord(int minLen)
     char match = 0;
     char safeOK = 0;
     char chosenOK = 0;
+    char check_guessed = 1;
     size_t n_bytes = minLen;
     FILE *dict_flp, *used_flp;
 
@@ -237,8 +238,15 @@ char* pickRandomWord(int minLen)
 
 
     dict_flp = fopen(dict_file, "r");
-    // Create the file if not already existing.
-    used_flp = fopen(used_words_file, "a+");
+    if (!dict_flp)
+    {
+        printf("%s file not found.\n", dict_file);
+        free(chosen);
+        free(safe);
+        return NULL;
+    }
+
+    used_flp = fopen(used_words_file, "r");
 
     while (getline((char**)&current, (size_t*)&n_bytes, dict_flp) != -1)
     {
@@ -253,9 +261,9 @@ char* pickRandomWord(int minLen)
             continue;
         }
 
-        if (!safeOK)
+        match = 0;
+        if (!safeOK && used_flp)
         {
-            match = 0;
             fseek(used_flp, 0, SEEK_SET);
             while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
             {
@@ -265,27 +273,37 @@ char* pickRandomWord(int minLen)
                     match = 1;
                     break;
                 }
-            }
-            if (!match)
-            {
-                strcpy(safe, current);
-                safeOK = 1;
             }
         }
+        // If the word is not played we pick it for safe.
+        if (!match && !safeOK)
+        {
+            strcpy(safe, current);
+            safeOK = 1;
+        }
+        // Else it was already played.
+        else if (match)
+        {
+            continue;
+        }
 
+        match = 0;
         if (randomScaled(RANDOM_SCALE) == 1)
         {
-            match = 0;
-            fseek(used_flp, 0, SEEK_SET);
-            while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
+            if (used_flp)
             {
-                tmp[strcspn(tmp, "\r\n")] = '\0';
-                if (!strcmp(current, tmp))
+                fseek(used_flp, 0, SEEK_SET);
+                while (getline((char**)&tmp, (size_t*)&n_bytes, used_flp) != -1)
                 {
-                    match = 1;
-                    break;
+                    tmp[strcspn(tmp, "\r\n")] = '\0';
+                    if (!strcmp(current, tmp))
+                    {
+                        match = 1;
+                        break;
+                    }
                 }
             }
+            // The word is only chosen if not already played and is randomly picked.
             if (!match)
             {
                 strcpy(chosen, current);
@@ -296,6 +314,11 @@ char* pickRandomWord(int minLen)
 
     if (!chosenOK)
     {
+        if (!safeOK)
+        {
+            free(safe);
+            safe = NULL;
+        }
         free(chosen);
         return safe;
     }
@@ -425,8 +448,7 @@ int playHangman(int word_len)
 
     rem_letters = strlen(word);
 
-    guessed = (char *)malloc(strlen(word) * sizeof(char));
-    for (int i=0; i<strlen(word); i++) {guessed[i] = 0;}
+    guessed = (char *)calloc(strlen(word), sizeof(char));
 
     word_list = WordToList(word);
 
@@ -471,8 +493,11 @@ int playHangman(int word_len)
             push((struct list_node **)&picked_letters, letter);
             printStack((struct list_node *)picked_letters);
 
-            getGallows((char *)gallows, 0);
-            printf("%s", gallows);
+            if (rem_tries != NUMBER_OF_TRIES)
+            {
+                getGallows((char *)gallows, 0);
+                printf("%s", gallows);
+            }
 
             printf("Remaining tries: %d\n", rem_tries);
         }
@@ -534,6 +559,7 @@ int mainMenu()
         case 2:
             printf("New word length: ");
             scanf("%d", &word_len);
+            flushSTDIN();
             playHangman(word_len);
             return 0;
             break;
