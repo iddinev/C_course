@@ -154,7 +154,7 @@ void invertString(char *msg)
     if (!msg) {return;}
 
     int len = strlen(msg);
-    char *invert = (char*)malloc(len * sizeof(char));
+    char *invert = (char*)malloc(len * sizeof(char)+1);
     int i;
 
     for (i=0; i<len; i++)
@@ -278,6 +278,10 @@ char* pickRandomWord(int minLen)
         // If the word is not played we pick it for safe.
         if (!match && !safeOK)
         {
+            if (strlen(current) > minLen-1)
+            {
+                safe = (char *)realloc(safe, strlen(current)+1);
+            }
             strcpy(safe, current);
             safeOK = 1;
         }
@@ -306,6 +310,10 @@ char* pickRandomWord(int minLen)
             // The word is only chosen if not already played and is randomly picked.
             if (!match)
             {
+                if (strlen(current) > minLen-1)
+                {
+                    chosen = (char *)realloc(chosen, strlen(current)+1);
+                }
                 strcpy(chosen, current);
                 chosenOK = 1;
             }
