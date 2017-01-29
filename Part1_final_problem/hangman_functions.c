@@ -52,7 +52,7 @@ void invertString(char *msg);
 // Get malloced memory and copy the inverted gallow in it.
 // Can return the current gallow or go and return the next until EOF.
 // if the last gallows is reached returns 1; otherwise 0;
-int getGallows(char *gallows, int next);
+int getGallows(char *gallows, FILE *gallows_flp, int next);
 
 // Pick a random word (not belonging to the used_words file) newline stripped.
 // If no word is picked, a safe option is returned - the first word
@@ -89,7 +89,7 @@ int mainMenu();
 void push(struct list_node **top_node, char letter)
 {
     struct list_node *new_node;
-    new_node = (struct list_node*)malloc(sizeof(struct list_node));
+    new_node = (struct list_node *)malloc(sizeof(struct list_node));
 
     if (!*top_node)
     {
@@ -154,7 +154,7 @@ void invertString(char *msg)
     if (!msg) {return;}
 
     int len = strlen(msg);
-    char *invert = (char*)malloc(len * sizeof(char)+1);
+    char *invert = (char *)malloc(len * sizeof(char)+1);
     int i;
 
     for (i=0; i<len; i++)
@@ -170,18 +170,22 @@ void invertString(char *msg)
 }
 
 
-int getGallows(char *gallows, int next)
+int getGallows(char *gallows, FILE *gallows_flp, int next)
 {
-    FILE *gallows_flp;
     static int file_cur_pos = 0;
     static int file_prev_pos = 0;
     int n_bytes = 0;
     int last_gallows = 0;
     char swap;
-    char *tmp = (char*)malloc(sizeof(char));
+    char *tmp = (char *)malloc(sizeof(char));
+
     gallows[0] = '\0';
 
-    gallows_flp = fopen(gallows_file, "r");
+    if (ftell(gallows_flp) == (long)SEEK_SET)
+    {
+        file_prev_pos = (int)ftell(gallows_flp);
+        file_cur_pos = (int)ftell(gallows_flp);
+    }
 
     if (next)
     {
@@ -223,8 +227,8 @@ int getGallows(char *gallows, int next)
 
 char* pickRandomWord(int minLen)
 {
-    char *chosen = (char*)malloc(minLen*sizeof(char));
-    char *safe = (char*)malloc(minLen*sizeof(char));
+    char *chosen = (char *)malloc(minLen*sizeof(char));
+    char *safe = (char *)malloc(minLen*sizeof(char));
     char *current = NULL;
     char *tmp = NULL;
     char match = 0;
@@ -437,7 +441,8 @@ int playHangman(int word_len)
     struct list_node *picked_letters = NULL;
     struct list_node *tmp = NULL;
     FILE *used_flp;
-    char *gallows = (char*)malloc(GALLOWS_SIZE * sizeof(char));
+    FILE *gallows_flp;
+    char *gallows = (char *)malloc(GALLOWS_SIZE * sizeof(char));
     char *word = NULL;
     char *guessed = NULL;
     char letter;
@@ -451,6 +456,13 @@ int playHangman(int word_len)
     if (!word)
     {
         printf("No suitable word found.\n");
+        return outcome;
+    }
+
+    gallows_flp = fopen(gallows_file, "r");
+    if (!gallows_flp)
+    {
+        printf("%s file not found.\n", gallows_file);
         return outcome;
     }
 
@@ -489,7 +501,7 @@ int playHangman(int word_len)
             push((struct list_node **)&picked_letters, letter);
             printStack((struct list_node *)picked_letters);
 
-            getGallows((char *)gallows, 1);
+            getGallows((char *)gallows, gallows_flp, 1);
             printf("%s", gallows);
 
             printf("Remaining tries: %d\n", rem_tries);
@@ -503,7 +515,7 @@ int playHangman(int word_len)
 
             if (rem_tries != NUMBER_OF_TRIES)
             {
-                getGallows((char *)gallows, 0);
+                getGallows((char *)gallows, gallows_flp, 0);
                 printf("%s", gallows);
             }
 
@@ -520,6 +532,7 @@ int playHangman(int word_len)
         used_flp = fopen(used_words_file, "a+");
         fprintf(used_flp, "%s\n", word);
         fclose(used_flp);
+        fclose(gallows_flp);
     }
     else
     {
@@ -527,6 +540,8 @@ int playHangman(int word_len)
         printf("-------Well... you tried..------\n");
         printf("--------------------------------\n");
         printf("Word was %s.\n", word);
+        fseek(gallows_flp, 0, SEEK_SET);
+        fclose(gallows_flp);
     }
 
     free(word);
