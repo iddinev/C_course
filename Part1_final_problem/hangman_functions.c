@@ -12,6 +12,7 @@
 #define NUMBER_OF_TRIES 7
 
 
+
 // Constants and structs.
 
 // Data is stored in ascii.
@@ -57,7 +58,7 @@ int getGallows(char *gallows, FILE *gallows_flp, int next);
 // Pick a random word (not belonging to the used_words file) newline stripped.
 // If no word is picked, a safe option is returned - the first word
 // that was read from the dictionary with ok len and not already used.
-// If there is no safe option - returns NULL.
+// If there is no safe option - returns 'NULL'.
 // Function looks a bit messy but - code now, refactor later.
 char* pickRandomWord(int minLen);
 
@@ -73,7 +74,7 @@ void printWord(struct list_node *word, char guessed[]);
 
 struct list_node *WordToList(char *word);
 
-// Wrapper function of tolower(int c).
+// Wrapper function of 'tolower(int c)'.
 void lowerCase(char *letter);
 
 int playHangman(int word_len);
@@ -177,7 +178,7 @@ int getGallows(char *gallows, FILE *gallows_flp, int next)
     int n_bytes = 0;
     int last_gallows = 0;
     char swap;
-    char *tmp = (char *)malloc(sizeof(char));
+    char *tmp = NULL;
 
     gallows[0] = '\0';
 
@@ -200,6 +201,7 @@ int getGallows(char *gallows, FILE *gallows_flp, int next)
 
     for (int i=0; i<=6; i++)
     {
+        // 'getline' alocates memory.
         getline((char**)&tmp, (size_t*)&n_bytes, gallows_flp);
         if (strlen(tmp) < 7)
         {
