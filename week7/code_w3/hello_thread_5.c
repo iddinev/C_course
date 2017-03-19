@@ -3,7 +3,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 
-#define NUM_THREADS 10
+#define NUM_THREADS 20
 
 typedef struct {
 	int rank;
@@ -37,23 +37,26 @@ void* hello_thread(void *rank) {
 		pthread_mutex_unlock(&curr->mutex1);
 	}
 
-	if (thread_rank < NUM_THREADS -1) {
-		thread_data *next = &td[thread_rank + 1];
-		pthread_mutex_lock(&next->mutex2);
-		if (!next->finished2)
-			pthread_cond_wait(&next->cond2, &next->mutex2);
-		pthread_mutex_unlock(&next->mutex2);
-	}
+	/* if (thread_rank < NUM_THREADS -1) { */
+    if (thread_rank > 0) {
+		/* thread_data *next = &td[thread_rank - 1]; */
+        thread_data *next = &td[NUM_THREADS - thread_rank];
+        pthread_mutex_lock(&next->mutex2);
+        if (!next->finished2)
+            pthread_cond_wait(&next->cond2, &next->mutex2);
+        pthread_mutex_unlock(&next->mutex2);
+    }
 
 	printf("Sayonara from thread %d\n", thread_rank);
 
-	if (thread_rank > 0) {
-		thread_data *curr = &td[thread_rank];
-		pthread_mutex_lock(&curr->mutex2);
-		curr->finished2 = 1;
-		pthread_cond_signal(&curr->cond2);
-		pthread_mutex_unlock(&curr->mutex2);
-	}
+    /* if (thread_rank < NUM_THREADS -1) { */
+    if (thread_rank > 0) {
+        thread_data *curr = &td[thread_rank];
+        pthread_mutex_lock(&curr->mutex2);
+        curr->finished2 = 1;
+        pthread_cond_signal(&curr->cond2);
+        pthread_mutex_unlock(&curr->mutex2);
+    }
 
 	return NULL;
 }

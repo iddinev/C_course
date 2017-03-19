@@ -7,13 +7,11 @@
 
 typedef struct {
 	int rank;
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
 } thread_data;
 
 thread_data td[NUM_THREADS];
 
-void* hello_thread(void *rank) {
+void* thread_func(void *rank) {
 	int thread_rank = *(int *)rank;
 	if (thread_rank > 0) {
 		thread_data *prev = &td[thread_rank - 1];
@@ -37,6 +35,8 @@ void* hello_thread(void *rank) {
 int main(void) {
 	int rank = 0;
 	int err;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
 	pthread_t thread_ids[NUM_THREADS];
 
 	while(rank < NUM_THREADS) {
