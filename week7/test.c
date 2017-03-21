@@ -12,41 +12,47 @@ pthread_cond_t c  = PTHREAD_COND_INITIALIZER;
 
 void thr_exit() {
     pthread_mutex_lock(&m);
-    done = 1;
-    pthread_cond_signal(&c);
-    /* cerr = pthread_mutex_unlock(&m); */
-    /* printf("C ERR %d\n", cerr); */
-    /* if (!cerr) { */
-        /* printf("mutex_unlock error: child %d\n", cerr); */
-    /* } */
+    printf("child1 locked the mutex\n");
+    pthread_cond_wait(&c, &m);
+    printf("child1 unlocks\n");
+    pthread_mutex_unlock(&m);
 }
 
 void *child(void* arg) {
-    printf("child\n");
+    int rank = *(int*)arg;
     thr_exit();
+    return NULL;
+}
+
+void *child2(void* arg) {
+    int rank = *(int*)arg;
+    pthread_mutex_lock(&m);
+    printf("child2 locked the mutex\n");
+    pthread_cond_wait(&c, &m);
+    sleep(3);
+    printf("child2 unlocks\n");
+    /* pthread_mutex_unlock(&m); */
     return NULL;
 }
 
 void thr_join() {
     pthread_mutex_lock(&m);
-    while (done == 0) {
-        pthread_cond_wait(&c, &m);
-    }
-    /* perr = pthread_mutex_unlock(&m); */
-    /* printf("P ERR %d\n", perr); */
+    pthread_cond_broadcast(&c);
     perr = pthread_mutex_unlock(&m);
-    printf("P ERR %d\n", perr);
-    /* if (!perr) { */
-        /* printf("mutex_unlock error: parent %d\n", perr); */
-    /* } */
+    printf("mutex unlocked\n");
 }
 
 int main(int argc, char* argv[]) {
     printf("parent: begin\n");
-    pthread_t p;
-    pthread_create(&p, NULL, child, NULL);
-    thr_join();
+    pthread_t p1, p2;
+    int r1 = 1;
+    int r2 = 2;
+    pthread_create(&p2, NULL, child2, (void*)&r2);
+    pthread_create(&p1, NULL, child, (void*)&r1);
     printf("parent: end\n");
-    pthread_join(p, NULL);
+    sleep(1);
+    thr_join();
+    pthread_join(p1, NULL);
+    pthread_join(p2, NULL);
     return 0;
 }
