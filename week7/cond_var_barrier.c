@@ -12,51 +12,47 @@
 
 
 
-// Constants and structs.
-
-typedef struct
-{
-    pthread_cond_t *cond_barrier;
-    pthread_mutex_t *mutex_barrier;
-    int *num_threads;
-} barrier;
-
-// *END* Constants and structs.
-
-
-
-// Function prototypes:
-
-int barrier_init(const barrier barr)
+int barrier_init(barrier *barr, int nthreads)
 {
     int errno;
 
-    errno = pthread_cond_init(barr.cond_barrier);
-    errno += pthread_mutex_init(barr.mutex_barrier);
+    errno = pthread_cond_init(&barr->cond, NULL);
+    errno += pthread_mutex_init(&barr->mutex, NULL);
+
+    barr->num_threads = nthreads;
 
     return errno;
 }
 
 
-int barrier_destroy(const pthread_cond_t *cond_barrier,
-                    const pthread_mutex_t *mutex_barrier)
+int barrier_destroy(barrier *barr)
 {
     int errno;
 
-    errno = pthread_cond_destroy(&cond_barrier);
-    errno += pthread_mutex_destroy(&mutex_barrier);
+    errno = pthread_cond_destroy(&barr->cond);
+    errno += pthread_mutex_destroy(&barr->mutex);
 
     return errno;
 }
 
 
-int barrier_wait(const pthread_cond_t *cond_barrier,
-                 const pthread_mutex_t *mutex_barrier)
+int barrier_wait(barrier *barr)
 {
     int errno;
 
-    errno = pthread_mutex_lock(&mutex_barrier);
-    errno += pthread_cond_wait(
+    errno = pthread_mutex_lock(&barr->mutex);
+    if (barr->num_threads > 1)
+    {
+        barr->num_threads--;
+        errno += pthread_cond_wait(&barr->cond, &barr->mutex);
+    }
+    else if (barr->num_threads == 1)
+    {
+        errno +=pthread_cond_broadcast(&barr->cond);
+    }
+    errno += pthread_mutex_unlock(&barr->mutex);
+
+    return errno;
 }
 
 // *END* Function prototypes.
